@@ -1,0 +1,70 @@
+version: '3.9'
+
+networks:
+  services-network:
+    driver: bridge
+
+services:
+  rabbitmq:
+    image: 'rabbitmq:3-management'
+    networks:
+      - services-network
+    volumes:
+      - ./rabbitmq/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf:ro
+    ports:
+      - "8080:15672"
+      - "5001:5673" # Expose this port while running the producer and consumer services locally
+    healthcheck:
+      test: [ "CMD", "rabbitmqctl", "status" ]
+      interval: 5s
+      timeout: 15s
+      retries: 5
+  server:
+    build:
+      context: .
+      dockerfile: ./server/Dockerfile
+    ports:
+      - 8090:8090
+    networks:
+      - services-network
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 60s
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+        #  env_file:
+        #      - .env
+        #  # restart: on-failure
+        #  depends_on:
+        #      rabbitmq:
+        #          condition: service_healthy
+
+  mockservice:
+    #        container_name: mockservice
+    build:
+      context: .
+      dockerfile: ./mockservice/Dockerfile
+    ports:
+      - 8091:8091
+    networks:
+      - services-network
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 60s
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+        #  env_file:
+        #      - .env
+        #  stdin_open: true
+        #  tty: true
+        #  depends_on:
+        #      rabbitmq:
+        #          condition: service_healthy
