@@ -1,0 +1,13 @@
+[user]
+	name = Adam Palhazi
+	email = palhaziadev@gmail.com
+
+[github]
+user = "palhaziadev"
+
+[core]
+sshCommand = "ssh -i ~/.ssh/palhaziadev"
+
+[remote "origin"]
+  url = git@github.com-palhaziadev:palhaziadev/forex-dashboard.git
+  fetch = +refs/heads/*:refs/remotes/origin/*
