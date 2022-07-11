@@ -68,3 +68,10 @@ services:
         #  depends_on:
         #      rabbitmq:
         #          condition: service_healthy
+  # frontend:
+  #   build:
+  #     context: ./ForexDashboard
+  #   ports:
+  #     - 8089:8089
+  #   networks:
+  #     - services-network

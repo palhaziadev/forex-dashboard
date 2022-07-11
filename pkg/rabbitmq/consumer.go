@@ -1,6 +1,7 @@
 package rabbbitmq_utils
 
 import (
+	"fmt"
 	"log"
 
 	"github.com/streadway/amqp"
@@ -52,7 +53,7 @@ func (x RMQConsumer) Consume() {
 
 	go func() {
 		for d := range msgs {
-			// fmt.Printf("-----for loop: %s\n", d.Body)
+			fmt.Printf("-----for loop: %s\n", d.Body)
 			x.MsgHandler(x.Queue, d, nil)
 		}
 	}()

@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/palhaziadev/forex-dashboard/mockservice/internal/generator"
 	config "github.com/palhaziadev/forex-dashboard/pkg/config"
 	mqUtils "github.com/palhaziadev/forex-dashboard/pkg/rabbitmq"
 )
@@ -38,7 +39,17 @@ const (
 	healthSatusOk string = "healthy1"
 )
 
-func handleData(w http.ResponseWriter, r *http.Request) {
+type MockService struct {
+	generator *generator.MockGenerator
+}
+
+func NewMockService(generator *generator.MockGenerator) *MockService {
+	return &MockService{
+		generator: generator,
+	}
+}
+
+func (service *MockService) handleData(w http.ResponseWriter, r *http.Request) {
 	var data = dataResponse{Data: rand.Intn(100)}
 	switch r.Method {
 	case http.MethodGet:
@@ -62,7 +73,7 @@ func handleData(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func handleHealthCheck(w http.ResponseWriter, r *http.Request) {
+func (service *MockService) handleHealthCheck(w http.ResponseWriter, r *http.Request) {
 	var healthCheck = healthStatusResponse{Status: healthSatusOk}
 	switch r.Method {
 	case http.MethodGet:
@@ -86,7 +97,7 @@ func handleHealthCheck(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func sendRabbitMessage(msg Message) {
+func (service *MockService) sendRabbitMessage(msg Message) {
 	connectionString := config.GetEnvVar("RMQ_URL")
 
 	rmqProducer := mqUtils.RMQProducer{
@@ -101,19 +112,19 @@ func sendRabbitMessage(msg Message) {
 	rmqProducer.PublishMessage("text/plain", []byte(marshalledMsg))
 }
 
-func SendData() {
+func (service *MockService) SendData() {
 	for {
 		//send pock data every 2 seconds
-		sendRabbitMessage(Message{Message: GenerateNumber()})
+		service.sendRabbitMessage(Message{Message: service.generator.GenerateNumber()})
 		time.Sleep(2 * time.Second)
 	}
 }
 
-func RegisterHandlers(apiBasePath string) func() {
+func (service *MockService) RegisterHandlers(apiBasePath string) func() {
 	returnFunction := func() {
-		healthCheckHandler := http.HandlerFunc(handleHealthCheck)
+		healthCheckHandler := http.HandlerFunc(service.handleHealthCheck)
 		http.Handle(fmt.Sprintf("%s/%s", apiBasePath, healthCheckPath), healthCheckHandler)
-		dataHandler := http.HandlerFunc(handleData)
+		dataHandler := http.HandlerFunc(service.handleData)
 		http.Handle(fmt.Sprintf("%s/%s", apiBasePath, dataPath), dataHandler)
 	}
 	return returnFunction

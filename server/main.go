@@ -16,8 +16,11 @@ func main() {
 	fmt.Printf("Current Unix Time: %v\n", time.Now().Unix())
 	time.Sleep(20 * time.Second)
 
-	server.RegisterHandlers(basePath)()
-	go server.MqConsumerTest()
+	srv := server.NewServer()
+
+	// TODO move to NewServer?
+	srv.RegisterHandlers(basePath)()
+	go srv.MqConsumerTest()
 
 	http.ListenAndServe(":8090", nil)
 }
