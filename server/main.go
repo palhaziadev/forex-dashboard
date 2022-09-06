@@ -22,5 +22,11 @@ func main() {
 	srv.RegisterHandlers(basePath)()
 	go srv.MqConsumerTest()
 
+	// httpServer := &http.Server{
+	// 	Addr:    ":8000",
+	// }
+	// TODO http server graceful shutdown
+	// httpServer.Shutdown(context.Background())
+
 	http.ListenAndServe(":8090", nil)
 }

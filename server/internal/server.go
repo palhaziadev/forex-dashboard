@@ -13,6 +13,7 @@ import (
 	"golang.org/x/net/websocket"
 )
 
+// TODO dependency injection?
 type testData struct {
 	Number int
 }
