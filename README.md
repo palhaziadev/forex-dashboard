@@ -1,4 +1,4 @@
-# forex-dashboard
+# Forex-dashboard
 
 ForexDashboard is an application that can generate price data for currency pairs (e.g. EURUSD exchange rate) and show the generated data real-time on a candlestick chart.
 <br/>
