@@ -11,6 +11,7 @@ export class ForexListService {
 
   getForexList() {
     // TODO create type
-    return this.http.get<any>('http://localhost:8090/api/forexList');
+    // return this.http.get<any>('http://localhost:8090/api/forexList');
+    return this.http.get<any>('http://localhost:8092/api/currency/getAllCurrencyPair');
   }
 }

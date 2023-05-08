@@ -7,9 +7,15 @@ import { Component, OnInit } from '@angular/core';
 })
 export class SubscriptionListComponent implements OnInit {
 
+  isItemVisible = true
+
   constructor() { }
 
   ngOnInit(): void {
+  }
+
+  destroyItem() {
+    this.isItemVisible = false;
   }
 
 }

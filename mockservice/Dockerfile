@@ -1,11 +1,11 @@
 # Start from golang base image
-FROM base as mockservice
+FROM base2 as mockservice
 
-WORKDIR /go/src/app
+ENV PROJECT_DIR=/go/src/app/mockservice
+
+WORKDIR /go/src/app/mockservice
 
 COPY ./pkg /go/src/app/pkg
 COPY ./mockservice /go/src/app/mockservice
 
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /go/bin/mockservice /go/src/app/mockservice
-
-ENTRYPOINT [ "/go/bin/mockservice" ]
+ENTRYPOINT CompileDaemon -build="go build -o /go/bin/mockservice" -command="/go/bin/mockservice"

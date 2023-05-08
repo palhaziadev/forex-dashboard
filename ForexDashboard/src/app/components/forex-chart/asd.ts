@@ -61,6 +61,12 @@ export class ForexChartComponent implements OnChanges, OnInit {
                   units: [['second', [1]]]
               }
           }, {
+            // {
+            //   *     type: 'month',
+            //   *     count: 1,
+            //   *     text: '1m',
+            //   *     title: 'View 1 month'
+            //   * }
             preserveDataGrouping: true,
               type: 'minute',
               count: 1,
@@ -115,19 +121,84 @@ export class ForexChartComponent implements OnChanges, OnInit {
     //         width: 60
     //     },
       },
+
+      // plotOptions: {
+      //   series: {
+      //     dataGrouping: {
+      //       forced: true,
+      //       enabled: true,
+      //       units: [
+      //         [
+      //           'second',
+      //           [10, 15, 30]
+      //         ], [
+      //           'minute',
+      //           [1, 2, 5,]
+      //         ]
+      //       ]
+      //     }
+      //   },
+      //   candlestick: {
+      //     dataGrouping: {
+      //       forced: true,
+      //       enabled: true,
+      //       units: [
+      //         [
+      //           'second',
+      //           [10, 15, 30]
+      //         ], [
+      //           'minute',
+      //           [1, 2, 5,]
+      //         ]
+      //       ]
+      //     }
+      //   }
+      // },
+
       xAxis: {
         // range: 6 * 30 * 24 * 3600 * 1000 // six months
         type: 'datetime',
         min: new Date().getTime() - 1000 * 60 * 15, // now - 5 mins
         minRange: 1000 * 60 * 30,
         range: 1000 * 60 * 60,
+        // dateTimeLabelFormats: {
+
+        // }
+        // labels: {
+        //   formatter: function() {
+        //     console.log('aaa x', Highcharts.dateFormat('%b/%e/%Y', Number(this.value)), this.value)
+        //     return this.value
+        //     // return Highcharts.dateFormat('%b/%e/%Y', Number(this.value));
+        //   }
+        // }
       },
+
+      // xAxis: {
+      //   type: 'datetime',
+      //   // labels: {
+      //   //     format: '{value:%Y-%m-%d}'
+      //   // }
+      //   labels: {
+      //     formatter: function() {
+      //       return Highcharts.dateFormat('%b/%e/%Y', Number(this.value));
+      //     }
+      //   }
+      // },
+
+
+      // xAxis: {
+      //   type: "datetime",
+      //   categories: this.seriesData.map(date => {
+      //       return Highcharts.dateFormat('%Y-%m-%d', new Date(date.x).getTime());
+      //   })
+      // },
 
       series: [{
         name: 'AAPL',
         type: 'candlestick',
         // data: this.seriesData,
-        data: mockJson,
+        data: mockJson, //[],
+      //   data: [
       //     {
       //         "open": 1.01175,
       //         "close": 1.01175,
@@ -223,22 +294,34 @@ export class ForexChartComponent implements OnChanges, OnInit {
         tooltip: {
             valueDecimals: 5
         },
+        // dataGrouping: {
+        //   units: [
+        //     [
+        //       'second',
+        //       [1]
+        //     ], [
+        //       'minute',
+        //       [1, 5]
+        //     ]
+        //   ]
+        // }
       }]
+      // series: [{
+      //   data: this.seriesData,
+      //   type: 'line'
+      // }]
     };
   }
   ngOnInit(): void {
-    console.log('aaa json', mockJson)
   }
 
   getChartInstance(chartInstance: Highcharts.Chart) {
     this.chart = chartInstance
-    console.log('aaa instance', this.chart)
   }
 
 
 
   ngOnChanges(changes: SimpleChanges): void {
-    console.log('aaa changes: ', changes);
     const newData = changes?.['data']?.currentValue as Array<CandlestickData> ?? []
     if (this.chart && newData.length > 0 && this.chartOptions?.series?.[0]) {
       // const oldData = this.chartOptions.series[0]?.data as Highcharts.SeriesOptionsType[]

@@ -17,6 +17,8 @@ func NewController() *Controller {
 	}
 }
 
+// TODO add new endpoint and db connect in server or main??
+
 // TODO put this to pkg
 func setupResponse(w *http.ResponseWriter, req *http.Request) {
 	(*w).Header().Set("Access-Control-Allow-Origin", "*")
@@ -24,7 +26,7 @@ func setupResponse(w *http.ResponseWriter, req *http.Request) {
 	(*w).Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
 }
 
-func (server *Controller) HandleForexList(w http.ResponseWriter, r *http.Request) {
+func (controller *Controller) HandleForexList(w http.ResponseWriter, r *http.Request) {
 	setupResponse(&w, r)
 	// var healthCheck = healthStatusResponse{Status: healthSatusOk}
 	switch r.Method {

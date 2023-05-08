@@ -1,12 +1,16 @@
 package server
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
+	"syscall"
+	"time"
 
 	config "github.com/palhaziadev/forex-dashboard/pkg/config"
+	"github.com/palhaziadev/forex-dashboard/pkg/models"
 	mqUtils "github.com/palhaziadev/forex-dashboard/pkg/rabbitmq"
 	"github.com/palhaziadev/forex-dashboard/server/internal/controller"
 	"github.com/streadway/amqp"
@@ -14,53 +18,29 @@ import (
 )
 
 // TODO dependency injection?
-type testData struct {
-	Number int
+type candleStickData struct {
+	Open  float64 `json:"open"`
+	Close float64 `json:"close"`
+	High  float64 `json:"high"`
+	Low   float64 `json:"low"`
+	X     int64   `json:"x"` //timestamp
 }
 
-var messageChan chan *testData = make(chan *testData)
-
-var healthCheckPath = "health"
-
-type healthStatusResponse struct {
-	Status string `json:"status"`
-}
-
-const (
-	healthSatusOk string = "healthy3"
-)
+// var messageChan chan *testData = make(chan *testData)
+// var messageChan chan *[]models.CurrencyData = make(chan *[]models.CurrencyData)
+var messageChan chan *[]candleStickData = make(chan *[]candleStickData)
 
 type Server struct {
 	controller *controller.Controller
+	httpServer *http.Server
 }
 
 func NewServer() *Server {
 	return &Server{
 		controller: controller.NewController(), // TODO maybe add controller as a param from main.go
-	}
-}
-
-func (server *Server) handleHealthCheck(w http.ResponseWriter, r *http.Request) {
-	var healthCheck = healthStatusResponse{Status: healthSatusOk}
-	switch r.Method {
-	case http.MethodGet:
-		w.Header().Set("Content-Type", "application/json")
-		j, err := json.Marshal(string(healthCheck.Status) + " server")
-		log.Println(string(j))
-		if err != nil {
-			log.Print(err)
-			w.WriteHeader(http.StatusBadRequest)
-			return
-		}
-		fmt.Fprint(w, string(j))
-		if err != nil {
-			log.Fatal(err)
-		}
-
-	case http.MethodOptions:
-		return
-	default:
-		w.WriteHeader(http.StatusMethodNotAllowed)
+		httpServer: &http.Server{
+			Addr: ":8090",
+		},
 	}
 }
 
@@ -69,17 +49,28 @@ func (server *Server) consumerHandler(queue string, msg amqp.Delivery, err error
 		fmt.Printf("Error occurred in RMQ consumer: %s", err)
 	}
 
-	fmt.Printf("Message received on '%s' queue: %s", queue, string(msg.Body))
-	data := testData{}
+	fmt.Printf("Message received on '%s' queue: %s", queue, msg.Body)
+	data := []models.CurrencyData{}
 	err = json.Unmarshal(msg.Body, &data)
 	if err != nil {
 		fmt.Printf("Error occurred in consumer Unmarshal: %s", err)
 	}
 
+	// TODO put calculation to its own place
+	candleStick := []candleStickData{}
+	for _, v := range data {
+		newItem := candleStickData{Open: v.Open, Close: v.Close, High: v.High, Low: v.Low, X: time.Now().UnixMilli()}
+		candleStick = append(candleStick, newItem)
+		// fmt.Printf("%s -> %s\n", k, v)
+	}
+	////
+
+	fmt.Printf("----------\n\n: %v------------\n\n", data)
 	// go func() { messageChan <- &data }()
 	select {
-	case messageChan <- &data:
+	case messageChan <- &candleStick:
 		//if can't write to the channel drop the message
+		fmt.Printf("----------\n\n: dropper msg%v------------\n\n", data)
 		//TODO check if first or last message is sent when the frontend connects
 	default:
 	}
@@ -126,7 +117,7 @@ loop:
 		default:
 			msg := <-messageChan
 			b, err := json.Marshal(msg)
-			fmt.Printf("Message received: '%s'\n", b)
+			fmt.Printf("Message received ws: '%s'\n\n%v\n\n\n", b, msg)
 			websocket.JSON.Send(ws, msg)
 			if err != nil {
 				fmt.Printf("--------------handler error: '%s'\n", err)
@@ -138,12 +129,40 @@ loop:
 	defer ws.Close()
 }
 
+func (server *Server) KillApp(w http.ResponseWriter, r *http.Request) {
+	syscall.Kill(syscall.Getpid(), syscall.SIGTERM)
+}
+
 func (server *Server) RegisterHandlers(apiBasePath string) func() {
 	returnFunction := func() {
-		healthCheckHandler := http.HandlerFunc(server.handleHealthCheck)
 		http.Handle("/websocket", websocket.Handler(server.testWebsocketHandler))
-		http.Handle(fmt.Sprintf("%s/%s", apiBasePath, healthCheckPath), healthCheckHandler)
 		http.Handle(fmt.Sprintf("%s/%s", apiBasePath, server.controller.Path), http.HandlerFunc(server.controller.HandleForexList))
+		http.Handle(fmt.Sprintf("%s/%s", apiBasePath, "kill"), http.HandlerFunc(server.KillApp))
 	}
 	return returnFunction
+}
+
+func (server *Server) Start(apiBasePath string) {
+	// rabbitmq shutdown?
+	go server.MqConsumerTest()
+	server.RegisterHandlers(apiBasePath)()
+
+	go func() {
+		if err := server.httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatalf("server error: %s\n", err)
+		}
+	}()
+}
+
+func (server *Server) Shutdown() {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer func() {
+		// extra handling here
+		fmt.Println("++++++++++++extra handling here+++++++++++")
+		cancel()
+	}()
+
+	if err := server.httpServer.Shutdown(ctx); err != nil {
+		log.Fatalf("Server Shutdown Failed:%+v", err)
+	}
 }

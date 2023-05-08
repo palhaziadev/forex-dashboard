@@ -23,6 +23,8 @@ services:
     build:
       context: .
       dockerfile: ./server/Dockerfile
+    volumes:
+      - ./server:/go/src/app/server
     ports:
       - 8090:8090
     networks:
@@ -47,9 +49,32 @@ services:
     #        container_name: mockservice
     build:
       context: .
+      # context: ./mockservice
+      # target: debug
+      target: mockservice
       dockerfile: ./mockservice/Dockerfile
+    volumes:
+      - ./mockservice:/go/src/app/mockservice
     ports:
       - 8091:8091
+    networks:
+      - services-network
+      # frontend:
+      #   build:
+      #     context: ./ForexDashboard
+      #   ports:
+      #     - 8089:8089
+      #   networks:
+      #     - services-network
+
+  dbservice:
+    build:
+      context: .
+      dockerfile: ./dbservice/Dockerfile
+    volumes:
+      - ./dbservice:/go/src/app/dbservice
+    ports:
+      - 8092:8092
     networks:
       - services-network
     deploy:
@@ -59,22 +84,7 @@ services:
         max_attempts: 3
         window: 60s
     depends_on:
-      rabbitmq:
-        condition: service_healthy
-        #  env_file:
-        #      - .env
-        #  stdin_open: true
-        #  tty: true
-        #  depends_on:
-        #      rabbitmq:
-        #          condition: service_healthy
-        # frontend:
-        #   build:
-        #     context: ./ForexDashboard
-        #   ports:
-        #     - 8089:8089
-        #   networks:
-        #     - services-network
+      - postgres
 
   postgres:
     image: postgres:latest

@@ -10,7 +10,7 @@ import { WebsocketService } from './services/websocket.service';
 })
 export class AppComponent {
   public title = 'ForexDashboard';
-  public forexData: ForexData = {};
+  public forexData: ForexData | undefined;
 
   private startTime: any;
   private endTime: any;
@@ -47,10 +47,5 @@ export class AppComponent {
         },
         error: (err) => console.log('aaa forexDatas err', err.message),
     })
-
-    this.forexListService.getForexList()
-    .subscribe((data: any) => {
-      console.log('aaa forex list: ', data);
-    });
   }
 }

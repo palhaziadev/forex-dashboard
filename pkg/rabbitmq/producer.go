@@ -17,14 +17,20 @@ func (x RMQProducer) OnError(err error, msg string) {
 	}
 }
 
-func (x RMQProducer) PublishMessage(contentType string, body []byte) {
+func (x RMQProducer) PublishMessage(contentType string, body []byte) error {
 	log.Printf(x.ConnectionString)
 	conn, err := amqp.Dial(x.ConnectionString)
 	x.OnError(err, "Failed to connect to RabbitMQ")
+	if err != nil {
+		return err
+	}
 	defer conn.Close()
 
 	ch, err := conn.Channel()
 	x.OnError(err, "Failed to open a channel")
+	if err != nil {
+		return err
+	}
 	defer ch.Close()
 
 	q, err := ch.QueueDeclare(
@@ -36,6 +42,9 @@ func (x RMQProducer) PublishMessage(contentType string, body []byte) {
 		nil,     // arguments
 	)
 	x.OnError(err, "Failed to declare a queue")
+	if err != nil {
+		return err
+	}
 
 	err = ch.Publish(
 		"",     // exchange
@@ -47,4 +56,8 @@ func (x RMQProducer) PublishMessage(contentType string, body []byte) {
 			Body:        body,
 		})
 	x.OnError(err, "Failed to publish a message")
+	if err != nil {
+		return err
+	}
+	return nil
 }
