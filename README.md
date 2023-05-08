@@ -1,5 +1,10 @@
 # forex-dashboard
 
+ForexDashboard is an application that can generate price data for currency pairs (e.g. EURUSD exchange rate) and show the generated data real-time on a candlestick chart.
+<br/>
+I made this small project to learn Go and microservice architecture. Every service has it's own docker container.
+RabbitMQ is used for communication between services. 
+
 TODOS:
 - [x] live reload in docker on code change
 - [x] graceful shutdown on server
